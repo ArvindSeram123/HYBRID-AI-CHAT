@@ -23,7 +23,7 @@ st.markdown("""
 def load_data():
     # Build a relative path to the data file
     # This assumes 'app.py' is in the root and 'data' is a subfolder
-    data_file_path = os.path.join('vietnam_travel_dataset.json')
+    data_file_path = os.path.join('data', 'vietnam_travel_dataset.json')
     
     with open(data_file_path, 'r', encoding='utf-8') as f:
         raw_data = json.load(f)
