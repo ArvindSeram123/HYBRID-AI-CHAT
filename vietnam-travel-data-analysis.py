@@ -21,7 +21,7 @@ st.markdown("""
 @st.cache_data
 def load_data():
     # You can replace this with actual file loading
-    with open('data/vietnam_travel_dataset.json', 'r') as f:
+    with open('vietnam_travel_dataset.json', 'r') as f:
         raw_data = json.load(f)
     
     df = pd.json_normalize(raw_data)
