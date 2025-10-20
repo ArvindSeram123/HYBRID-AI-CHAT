@@ -185,45 +185,4 @@ GEMINI_API_KEY = "your-gemini-key"
 | **NaN in Dataset** | `dropna()` and fallback logic. | Ensures valid embeddings; quick validation via `df.info()`. |
 | **Graph Overfetch** | Cypher `LIMIT 40`; 200-char desc cap. | Keeps query time <100ms; prevents memory issues. |
 
-Aspect,Original Version,Improved Version,Key Improvement
-Dependencies & Models,"- OpenAI (text-embedding-3-small for embeddings, gpt-4o-mini for chat).
-- Pinecone, Neo4j.
-- Relies on API keys for all external services.","- SentenceTransformer (all-MiniLM-L6-v2 for embeddings).
-- Google Gemini (gemini-2.0-flash for chat).
-- Pinecone, Neo4j unchanged.
-- Adds requests for timeout handling, os/json for local file ops.","Cost/Offline Efficiency: Switches to local embeddings (download once, no per-query API calls; ~384-dim vs. original's 1536-dim for lighter compute). Gemini may reduce costs vs. OpenAI. Enables partial offline use post-model load."
-Initialization,"- Direct client init (OpenAI, Pinecone, Neo4j).
-- Index creation if missing (hard-coded region us-east1-gcp).
-- No retries or local data.","- Gemini config first.
-- Retries (3x with 5s sleep) for model load, handling timeouts/ConnectionErrors.
-- Safer index listing (handles dict/list response formats) + creation (uses config.PINECONE_ENV for region).
-- Optional local JSON dataset load for extra metadata (e.g., best_time_to_visit).","Robustness: Adds fault-tolerant model loading (prevents crashes on flaky networks). Flexible index handling avoids errors if API responses vary. Local dataset (~O(1) lookup) enriches context without DB hits, reducing latency."
-Embedding Function,- embed_text: Calls OpenAI API synchronously.,"- embed_text: Uses local model.encode() (batch=1, to list).",Performance: Local inference is faster (~10-50ms vs. API latency) and cheaper (no tokens billed). Batch-ready for future scaling.
-Pinecone Query,"- pinecone_query: Embeds via API, queries with include_metadata=True, include_values=False.
-- Prints debug len(res[""matches""]).
-- Assumes success.","- pinecone_query: Same query params, but wraps in try-except (returns [] on error).
-- No debug print.",Error Resilience: Graceful degradation (empty list on failure) prevents full crashes. Cleaner (no debug spam).
-Graph Context Fetch,"- fetch_graph_context: Loops per node_id, queries neighbors (depth=1, LIMIT 10 per node).
-- Includes labels, full desc[:400].
-- Prints debug len(facts).","- fetch_graph_context: Single batched Cypher query (WHERE n.id IN $ids, LIMIT 40 total).
-- No labels, desc[:200].
-- Early return if no IDs.",Efficiency/Scalability: Batched query reduces Neo4j round-trips (O(1) vs. O(K) for TOP_K=5). Tighter limits prevent token bloat. Shorter descs keep prompts concise.
-Query Type Detection,- None (fixed temperature=0.2).,"- detect_query_type: Keyword-based classifier (e.g., ""itinerary"" if ""plan"" in query).
-- Maps to temperature (0.15-0.35).","Response Quality: Dynamic temperature tailors creativity (e.g., more varied for ""activity"" queries). Simple but effective for domain-specific tuning without full classification."
-Prompt Building,"- build_prompt: Basic system msg + vec snippets (id/name/type/score/city) + graph triples.
-- User msg with TOP_K=5 limit, suggests 2-3 steps, cites IDs.
-- Returns list of dicts for OpenAI.","- build_prompt: Groups matches by type (City/Attraction/etc.), formats with local dataset (e.g., best_time).
-- Graph as simple triples.
-- Adds few-shot examples for style.
-- Structured sections (Instructions, Query, Matches, Facts, Examples).
-- Returns single string for Gemini.","Prompt Engineering: Grouping + local integration makes context more scannable/actionable (e.g., ""Best time: Feb-May""). Few-shots guide concise, itinerary-focused outputs. Reduces hallucination by emphasizing citations/nearby recs. Overall: More structured for better LLM adherence."
-Chat Generation,"- call_chat: OpenAI chat.completions.create (max_tokens=600, temp=0.2 fixed).","- call_chat: Gemini generate_content (max_output_tokens=600, configurable temp).","Flexibility: Temp param enables query-adaptive responses. Gemini's config aligns closely, but error handling added (returns error msg)."
-Interactive Loop,"- Simple while loop: Input, query/embed/graph/prompt/chat, print answer.
-- Exit on ""exit""/""quit""/empty.
-- TOP_K=5 fixed.","- Enhanced loop: Skips empty input, detects type for temp, extracts IDs for graph.
-- Friendlier prints (""Hi, I am your Vietnam Travel Assistant"").",UX/Logic: Smarter input handling + type-aware generation improves flow. Cleaner output formatting.
-Overall Structure,"- ~150 lines, basic sections (Config, Init, Helpers, Chat).
-- Hard-coded prints/debug.
-- No local files.","- ~200 lines, same sections + dataset load.
-- More comments, init logs (e.g., ""[INIT] Loaded dataset..."").
-- Configurable via config.py (e.g., region).","Maintainability: Better logging for debugging/deploy. Modular (e.g., temp mapping). Prepares for extensions like dataset updates."
+
