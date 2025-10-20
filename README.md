@@ -186,3 +186,29 @@ GEMINI_API_KEY = "your-gemini-key"
 | **Graph Overfetch** | Cypher `LIMIT 40`; 200-char desc cap. | Keeps query time <100ms; prevents memory issues. |
 
 
+## 🔍 Comparison Summary
+
+| **Aspect** | **Original Version** | **Improved Version** | **Key Improvement** |
+|-------------|----------------------|----------------------|----------------------|
+| **Dependencies & Models** | - OpenAI (`text-embedding-3-small` for embeddings, `gpt-4o-mini` for chat).<br>- Pinecone, Neo4j.<br>- Relies on API keys for all external services. | - SentenceTransformer (`all-MiniLM-L6-v2` for embeddings).<br>- Google Gemini (`gemini-2.0-flash` for chat).<br>- Pinecone, Neo4j unchanged.<br>- Adds `requests` for timeout handling, `os`/`json` for local file ops. | **Cost/Offline Efficiency:** Switches to local embeddings (download once, no per-query API calls; ~384-dim vs. original’s 1536-dim). Gemini may reduce costs vs. OpenAI and enables partial offline use. |
+| **Initialization** | - Direct client init (OpenAI, Pinecone, Neo4j).<br>- Index creation if missing (hard-coded region `us-east1-gcp`).<br>- No retries or local data. | - Gemini config first.<br>- Retries (3x with 5s sleep) for model load, handling timeouts/ConnectionErrors.<br>- Safer index listing (handles dict/list formats) + creation using `config.PINECONE_ENV`.<br>- Optional local JSON dataset load for extra metadata. | **Robustness:** Adds fault-tolerant model loading, flexible index handling, and local dataset integration for faster contextual lookups. |
+| **Embedding Function** | `embed_text`: Calls OpenAI API synchronously. | `embed_text`: Uses local `model.encode()` (batch=1, converts to list). | **Performance:** Local inference is faster (~10–50ms vs. API latency) and cheaper (no tokens billed). Batch-ready for scaling. |
+| **Pinecone Query** | - Embeds via API and queries Pinecone (`include_metadata=True`).<br>- Prints debug output.<br>- Assumes success. | - Same query params but wrapped in `try-except` (returns empty list on error).<br>- No debug print. | **Error Resilience:** Graceful degradation prevents crashes. Cleaner execution without debug spam. |
+| **Graph Context Fetch** | - Loops per `node_id`, separate queries (depth=1, LIMIT 10).<br>- Includes labels, full desc[:400]. | - Single batched Cypher query (`WHERE n.id IN $ids`, LIMIT 40).<br>- No labels, desc[:200].<br>- Early return if no IDs. | **Efficiency/Scalability:** Batched query reduces Neo4j round-trips (O(1) vs. O(K)). Shorter context avoids token bloat. |
+| **Query Type Detection** | None (fixed temperature = 0.2). | Adds `detect_query_type`: simple keyword classifier (e.g., “plan” → itinerary).<br>Maps to temperature (0.15–0.35). | **Response Quality:** Dynamic temperature tailors creativity per query type for domain-specific optimization. |
+| **Prompt Building** | - Basic system + vector snippet prompt.<br>- Lists ID/name/type/score/city.<br>- Returns list of dicts for OpenAI. | - Groups matches by type (City/Attraction/etc.), integrates local metadata (e.g., best time to visit).<br>- Graph triples simplified.<br>- Adds few-shot examples.<br>- Structured sections: **Instructions**, **Query**, **Matches**, **Facts**, **Examples**.<br>- Returns single formatted string for Gemini. | **Prompt Engineering:** Structured, grouped, and metadata-enriched prompts reduce hallucinations and improve travel relevance. |
+| **Chat Generation** | Calls `OpenAI.chat.completions.create` (max_tokens=600, temp=0.2 fixed). | Uses `Gemini.generate_content` (max_output_tokens=600, configurable temp). | **Flexibility:** Adjustable temperature per query. Adds error handling to return safe fallbacks. |
+| **Interactive Loop** | - Simple `while` loop (input → query → output).<br>- Exits on `"exit"` / `"quit"`. | - Skips empty input.<br>- Detects query type and adjusts temperature.<br>- Extracts IDs for graph fetch.<br>- Adds friendly intro (“Hi, I am your Vietnam Travel Assistant”). | **UX/Logic:** Smarter flow and friendlier user interaction. |
+| **Overall Structure** | - ~150 lines.<br>- Basic config/init/helpers.<br>- Hard-coded prints, no local files. | - ~200 lines.<br>- Adds dataset load, structured logs, and config flexibility (e.g., region). | **Maintainability:** Better logging, modularity, and easier extension (e.g., dataset updates, async support). |
+
+---
+
+
+### ✅ Improvements Achieved
+- **Reliability:** Handles timeouts, retries, and API inconsistencies gracefully.  
+- **Efficiency:** Local embeddings eliminate API cost and latency.  
+- **Scalability:** Batched Neo4j queries and modular design.  
+- **Quality:** Smarter prompting and adaptive temperatures produce more relevant, concise travel responses.  
+- **Extensibility:** Easy to plug in local datasets or switch model providers.
+
+
