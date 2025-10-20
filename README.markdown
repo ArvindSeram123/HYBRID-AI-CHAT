@@ -128,6 +128,8 @@ NEO4J_PASSWORD = "your-password"
   Uploading batches: 100%|██████████| 12/12 [00:26<00:00,  2.17s/it]
   All items uploaded successfully.
   ```
+  <img width="1600" height="815" alt="image" src="https://github.com/user-attachments/assets/1f9d5048-13cb-45a8-b297-cc925989a031" />
+
 - **Debug Tip**: Verify embedding dimensions (`len(emb) == 384`) and log batch sizes.
 
 ### 3. Interactive Chat
