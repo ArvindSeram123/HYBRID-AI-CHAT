@@ -1,0 +1,10 @@
+pandas
+matplotlib
+neo4j==5.9.0
+sentence-transformers
+torch
+torchvision
+torchaudio
+google-generativeai
+tqdm
+pinecone-client==3.0.0
