@@ -4,6 +4,7 @@ import json
 import plotly.express as px
 import plotly.graph_objects as go
 from collections import Counter
+import os  # Added for path joining
 
 # Set page config
 st.set_page_config(page_title="Vietnam Travel Analytics", layout="wide", initial_sidebar_state="expanded")
@@ -20,8 +21,11 @@ st.markdown("""
 # Load and preprocess data
 @st.cache_data
 def load_data():
-    # You can replace this with actual file loading
-    with open('vietnam_travel_dataset.json', 'r') as f:
+    # Build a relative path to the data file
+    # This assumes 'app.py' is in the root and 'data' is a subfolder
+    data_file_path = os.path.join('vietnam_travel_dataset.json')
+    
+    with open(data_file_path, 'r', encoding='utf-8') as f:
         raw_data = json.load(f)
     
     df = pd.json_normalize(raw_data)
@@ -30,7 +34,7 @@ def load_data():
 try:
     df, raw_data = load_data()
 except FileNotFoundError:
-    st.error("Data file not found. Make sure 'data/vietnam_travel_dataset.json' exists in your project.")
+    st.error("Data file not found. Make sure 'data/vietnam_travel_dataset.json' exists in your GitHub project.")
     st.stop()
 
 # Preprocessing
@@ -103,9 +107,9 @@ with tab1:
     with col2:
         # Bar chart
         fig_bar = px.bar(type_df, x='Type', y='Count',
-                        title="Asset Count by Type",
-                        color='Count',
-                        color_continuous_scale='Blues')
+                         title="Asset Count by Type",
+                         color='Count',
+                         color_continuous_scale='Blues')
         st.plotly_chart(fig_bar, use_container_width=True)
     
     # Top tags
@@ -123,21 +127,21 @@ with tab2:
     st.subheader("Regional Distribution")
     
     region_df = pd.DataFrame(list(stats['content_by_region'].items()), 
-                            columns=['Region', 'Assets'])
+                             columns=['Region', 'Assets'])
     region_df = region_df.sort_values('Assets', ascending=False)
     
     col1, col2 = st.columns(2)
     
     with col1:
         fig_region = px.bar(region_df, x='Region', y='Assets',
-                           title="Assets by Region",
-                           color='Assets',
-                           color_continuous_scale='Oranges')
+                            title="Assets by Region",
+                            color='Assets',
+                            color_continuous_scale='Oranges')
         st.plotly_chart(fig_region, use_container_width=True)
     
     with col2:
         fig_region_pie = px.pie(region_df, values='Assets', names='Region',
-                               title="Regional Coverage %")
+                                title="Regional Coverage %")
         st.plotly_chart(fig_region_pie, use_container_width=True)
     
     # Stats
@@ -152,12 +156,12 @@ with tab3:
     st.subheader("Assets per City")
     
     city_df = pd.DataFrame(list(stats['city_counts'].items()), 
-                          columns=['City', 'Count']).sort_values('Count', ascending=True)
+                           columns=['City', 'Count']).sort_values('Count', ascending=True)
     
     fig_cities = px.barh(city_df, x='Count', y='City',
-                        title="Content Assets by City",
-                        color='Count',
-                        color_continuous_scale='Viridis')
+                         title="Content Assets by City",
+                         color='Count',
+                         color_continuous_scale='Viridis')
     st.plotly_chart(fig_cities, use_container_width=True)
     
     # City selector
