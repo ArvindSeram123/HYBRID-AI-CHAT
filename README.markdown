@@ -89,16 +89,17 @@ The `vietnam_travel_dataset.json` contains 360 entities:
 ### Configuration
 Create `config.py`:
 ```python
+NEO4J_URI = "neo4j+s://your-instance.neo4j.io"  # Or bolt://localhost:7687
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "your-password"
+
+PINECONE_BATCH__SIZE = 32
 PINECONE_API_KEY = "your-pinecone-key"
 PINECONE_INDEX_NAME = "vietnam-travel"
 PINECONE_VECTOR_DIM = 384
 PINECONE_ENV = "us-east-1"
 
 GEMINI_API_KEY = "your-gemini-key"
-
-NEO4J_URI = "neo4j+s://your-instance.neo4j.io"  # Or bolt://localhost:7687
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "your-password"
 ```
 
 ### Installation
@@ -138,14 +139,8 @@ NEO4J_PASSWORD = "your-password"
 - Safely handles Pinecone index creation (ignores 409 conflicts).
 - Interactive loop for queries like "budget hotels in Hanoi" or "beach activities in Da Nang".
 - **Sample Interaction**:
-  ```
-  Ask about your travel plans in Vietnam: beach destinations in Da Nang
-  === Response ===
-  For beach destinations in Vietnam, consider these options:
-  - **Da Nang [city_da_nang]:** A coastal city in Central Vietnam known for its beaches. The best time to visit is year-round.
-  - **Ha Long Bay [city_ha_long]:** While famous for its bay, it also offers beach areas and is connected to other destinations like Hoi An [city_hoi_an]. Ideal time to visit is February to May.
-  =======================
-  ```
+  <img width="1535" height="763" alt="image" src="https://github.com/user-attachments/assets/5dcf8645-1ce1-4ebc-9e92-99bcab8b0296" />
+
 - **Debug Tip**: Print `prompt_text[:500]` to check for token overflow; adjust `TOP_K` for larger datasets.
 
 ## Code Structure & Improvements
@@ -206,5 +201,3 @@ MIT License – See [LICENSE](LICENSE) for details.
 
 - **Dataset**: Custom Vietnam travel data (360 entities).
 - **Tools**: Pinecone, Neo4j, SentenceTransformers, Google Gemini.
-
-For issues or questions, open a GitHub issue. Happy travels! 🌏
