@@ -143,37 +143,6 @@ GEMINI_API_KEY = "your-gemini-key"
 
 - **Debug Tip**: Print `prompt_text[:500]` to check for token overflow; adjust `TOP_K` for larger datasets.
 
-## Code Structure & Improvements
-
-### Data_Visualization.py
-- **Purpose**: Exploratory data analysis.
-- **Changes**:
-  - Used `Counter` for tag frequency analysis.
-  - Filtered `region` counts to cities only for precision.
-- **Debugging**: Added `dropna()` for `tags` to handle missing data; validated counts with `df.describe()`.
-
-### Pinecone_Upload.py
-- **Purpose**: Efficiently embed and upsert dataset to Pinecone.
-- **Changes**:
-  - Fallback to `description[:1000]` if `semantic_text` is absent.
-  - Implemented `chunked` generator for memory-efficient batching.
-  - Added `time.sleep(0.2)` to prevent rate limiting (observed at >50 req/s).
-- **Debugging**: Logged batch sizes; asserted embedding dims match `VECTOR_DIM`.
-
-### Test_Hybrid.py
-- **Purpose**: Core RAG pipeline with interactive chat.
-- **Changes**:
-  - **Retry Logic**: 3 retries for model loading with `ReadTimeout/ConnectionError` handling.
-  - **Index Handling**: Safely parses `pc.list_indexes()`; catches 409 errors with detailed logging (e.g., region mismatch).
-  - **Prompt Design**: Structured with few-shot examples; grouped matches by type; added `best_time_to_visit` from dataset.
-  - **Query Detection**: Keyword-based with dynamic temperature (e.g., 0.15 for timing, 0.35 for food).
-  - **Graph Query**: Limited to 40 results; truncated descriptions to 200 chars.
-  - **Error Fallbacks**: Returns empty lists on query failures; exits only after retries.
-- **Debugging**:
-  - Logged prompt length to avoid token limits (600 max).
-  - Monitored `len(matches)` to optimize `TOP_K`.
-  - Used `try-except` for all external API calls.
-
 ## Debugging Techniques
 
 | Issue | Technique | Value |
