@@ -185,8 +185,6 @@ GEMINI_API_KEY = "your-gemini-key"
 | **NaN in Dataset** | `dropna()` and fallback logic. | Ensures valid embeddings; quick validation via `df.info()`. |
 | **Graph Overfetch** | Cypher `LIMIT 40`; 200-char desc cap. | Keeps query time <100ms; prevents memory issues. |
 
-**Pro Tip**: Add unit tests (`pytest`) for embedding functions. Monitor API costs: Pinecone ~$0.10/query, Gemini ~$0.0001/1k tokens.
-
 ## Contributing
 
 1. Fork the repository and submit a pull request.
